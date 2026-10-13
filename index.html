@@ -1011,7 +1011,7 @@ function importRecipes(event) {
     try {
       const data = JSON.parse(e.target.result);
       if (!data.recipes || !Array.isArray(data.recipes)) {
-        alert('Invalid file — make sure you're importing a cookbook export.');
+        alert('Invalid file - make sure you are importing a cookbook export.');
         return;
       }
       const incoming = data.recipes;
@@ -1027,7 +1027,7 @@ function importRecipes(event) {
       renderRecipes();
       alert(`Import complete! ${added} new recipe${added !== 1 ? 's' : ''} added${incoming.length - added > 0 ? `, ${incoming.length - added} skipped (already exist)` : ''}.`);
     } catch(err) {
-      alert('Could not read file. Make sure it\'s a valid cookbook export.');
+      alert('Could not read file. Make sure it is a valid cookbook export.');
     }
   };
   reader.readAsText(file);
