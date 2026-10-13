@@ -454,6 +454,30 @@
       padding: 32px 16px;
       font-size: 0.9rem;
     }
+
+    .export-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .export-bar span {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      flex: 1;
+    }
+
+    .export-bar-btns {
+      display: flex;
+      gap: 6px;
+    }
   </style>
 </head>
 <body>
@@ -486,6 +510,16 @@
 <div id="tab-recipes" class="tab-content">
 
   <div class="recipe-list" id="recipe-list-view">
+    <div class="export-bar">
+      <span>Back up or restore your recipes</span>
+      <div class="export-bar-btns">
+        <button class="btn-accent btn-sm" style="padding:7px 12px;" onclick="exportRecipes()">⬇ Export</button>
+        <label class="btn-outline btn-sm" style="padding:7px 12px;cursor:pointer;border-radius:7px;border:1px solid var(--border);color:var(--text-muted);font-size:0.75rem;font-weight:600;">
+          ⬆ Import<input type="file" accept=".json" style="display:none;" onchange="importRecipes(event)" />
+        </label>
+      </div>
+    </div>
+
     <button class="btn-primary" style="margin-bottom:14px;" onclick="toggleAddRecipe()">+ Add Recipe</button>
 
     <div class="add-recipe-form" id="add-recipe-form">
@@ -953,6 +987,51 @@ function saveRecipe() {
   save();
   toggleAddRecipe();
   renderRecipes();
+}
+
+// ──────────────────────────────────────────────
+//  EXPORT / IMPORT
+// ──────────────────────────────────────────────
+function exportRecipes() {
+  const data = JSON.stringify({ recipes: state.recipes }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cookbook-recipes.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importRecipes(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.recipes || !Array.isArray(data.recipes)) {
+        alert('Invalid file — make sure you're importing a cookbook export.');
+        return;
+      }
+      const incoming = data.recipes;
+      const existingIds = new Set(state.recipes.map(r => String(r.name).toLowerCase()));
+      let added = 0;
+      incoming.forEach(r => {
+        if (!existingIds.has(String(r.name).toLowerCase())) {
+          state.recipes.push(r);
+          added++;
+        }
+      });
+      save();
+      renderRecipes();
+      alert(`Import complete! ${added} new recipe${added !== 1 ? 's' : ''} added${incoming.length - added > 0 ? `, ${incoming.length - added} skipped (already exist)` : ''}.`);
+    } catch(err) {
+      alert('Could not read file. Make sure it\'s a valid cookbook export.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // reset so same file can be re-imported if needed
 }
 
 // ──────────────────────────────────────────────
